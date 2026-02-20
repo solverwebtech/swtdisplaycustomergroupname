@@ -8,7 +8,7 @@ It can also be rendered using a custom hook.
 - Displays customer group name
 - Supports custom hook
 - Lightweight & override safe
-- Compatible with PrestaShop 8.x
+- Compatible with PrestaShop 1.7, 8.x and 9
 
 ## Author
 Kaleem Ullah
