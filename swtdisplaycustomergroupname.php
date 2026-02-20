@@ -1,31 +1,39 @@
 <?php
+
 /**
-* 2007-2026 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-*  @author    PrestaShop SA <contact@prestashop.com>
-*  @copyright 2007-2026 PrestaShop SA
-*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
-*  International Registered Trademark & Property of PrestaShop SA
-*/
+ * 2007-2026 PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ *  @author    PrestaShop SA <contact@prestashop.com>
+ *  @copyright 2007-2026 PrestaShop SA
+ *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  International Registered Trademark & Property of PrestaShop SA
+ */
+
+use Kaleem\SwtDisplayCustomerGroupName\SwtCustomerGroupDisplay;
+use Kaleem\SwtDisplayCustomerGroupName\Helper\SwtDisplayCustomerGroupHelper;
 
 if (!defined('_PS_VERSION_')) {
     exit;
+}
+
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
 }
 
 class SwtDisplayCustomerGroupName extends Module
@@ -37,21 +45,13 @@ class SwtDisplayCustomerGroupName extends Module
         $this->name = 'swtdisplaycustomergroupname';
         $this->tab = 'front_office_features';
         $this->version = '1.0.0';
-        $this->author = 'Kaleem Ullah | Solver Web Tech | Fiverr | UpWork';
+        $this->author = 'Kaleem Ullah | SolverWebTech | Freelance';
         $this->need_instance = 1;
-
-        /**
-         * Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6)
-         */
         $this->bootstrap = true;
-
         parent::__construct();
-
         $this->displayName = $this->l('Display Customer Group Name');
         $this->description = $this->l('This module will show customer group name with profile icon or anywhere with custom hook.');
-
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall this module?');
-
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => '9.0');
     }
 
@@ -61,37 +61,51 @@ class SwtDisplayCustomerGroupName extends Module
      */
     public function install()
     {
-        Configuration::updateValue('SWTDISPLAYCUSTOMERGROUPNAME_LIVE_MODE', false);
+        require_once __DIR__ . '/sql/install.php';
+        Configuration::updateValue('SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS', false);
+        // for desktop theme compatibility, default selectors are set to empty. User can set them according to their theme structure.
+        Configuration::updateValue('SWTDISPLAYCUSTOMERGROUPNAME_ICON_SELECTOR_JS', '');
+        Configuration::updateValue('SWTDISPLAYCUSTOMERGROUPNAME_NAME_SELECTOR_JS', '');
+        // for mobile theme compatibility, default selectors are set to common mobile theme selectors. User can change them if not compatible with their theme.
+        Configuration::updateValue('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_ICON_SELECTOR_JS', '');
+        Configuration::updateValue('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_NAME_SELECTOR_JS', '');
 
-        return parent::install() &&
-            $this->registerHook('header') &&
-            $this->registerHook('displayBackOfficeHeader');
+        return parent::install()
+            && installSql()
+            && SwtDisplayCustomerGroupHelper::installTab($this->name)
+            && SwtDisplayCustomerGroupHelper::initializeGroupDisplayRecords()
+            && $this->registerHook('displayHeader')
+            && $this->registerHook('displaySwtCustomerProfileIcon')
+            && $this->registerHook('displaySwtCustomerGroupName');
     }
 
     public function uninstall()
     {
-        Configuration::deleteByName('SWTDISPLAYCUSTOMERGROUPNAME_LIVE_MODE');
+        require_once __DIR__ . '/sql/uninstall.php';
+        Configuration::deleteByName('SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS');
+        Configuration::deleteByName('SWTDISPLAYCUSTOMERGROUPNAME_ICON_SELECTOR_JS');
+        Configuration::deleteByName('SWTDISPLAYCUSTOMERGROUPNAME_NAME_SELECTOR_JS');
+        Configuration::deleteByName('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_ICON_SELECTOR_JS');
+        Configuration::deleteByName('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_NAME_SELECTOR_JS');
 
-        return parent::uninstall();
+        return
+            uninstallSql()
+            && SwtDisplayCustomerGroupHelper::uninstallTab()
+            && parent::uninstall();
     }
+
+
 
     /**
      * Load the configuration form
      */
     public function getContent()
     {
-        /**
-         * If values have been submitted in the form, process.
-         */
         if (((bool)Tools::isSubmit('submitSwtDisplayCustomerGroupNameModule')) == true) {
             $this->postProcess();
         }
 
-        $this->context->smarty->assign('module_dir', $this->_path);
-
-        $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
-
-        return $output.$this->renderForm();
+        return $this->renderForm();
     }
 
     /**
@@ -110,7 +124,7 @@ class SwtDisplayCustomerGroupName extends Module
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitSwtDisplayCustomerGroupNameModule';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            .'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         $helper->tpl_vars = array(
@@ -130,16 +144,16 @@ class SwtDisplayCustomerGroupName extends Module
         return array(
             'form' => array(
                 'legend' => array(
-                'title' => $this->l('Settings'),
-                'icon' => 'icon-cogs',
+                    'title' => $this->l('Settings'),
+                    'icon' => 'icon-cogs',
                 ),
                 'input' => array(
                     array(
                         'type' => 'switch',
-                        'label' => $this->l('Live mode'),
-                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_LIVE_MODE',
+                        'label' => $this->l('Use JavaScript OR Hook'),
+                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS',
                         'is_bool' => true,
-                        'desc' => $this->l('Use this module in live mode'),
+                        'desc' => $this->l('Enable will use JavaScript to display icon and customer group'),
                         'values' => array(
                             array(
                                 'id' => 'active_on',
@@ -154,17 +168,28 @@ class SwtDisplayCustomerGroupName extends Module
                         ),
                     ),
                     array(
-                        'col' => 3,
+                        'col' => 4,
                         'type' => 'text',
-                        'prefix' => '<i class="icon icon-envelope"></i>',
-                        'desc' => $this->l('Enter a valid email address'),
-                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_ACCOUNT_EMAIL',
-                        'label' => $this->l('Email'),
+                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_ICON_SELECTOR_JS',
+                        'label' => $this->l('Icon JS Selector'),
                     ),
                     array(
-                        'type' => 'password',
-                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_ACCOUNT_PASSWORD',
-                        'label' => $this->l('Password'),
+                        'col' => 4,
+                        'type' => 'text',
+                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_NAME_SELECTOR_JS',
+                        'label' => $this->l('Customer Name JS Selector'),
+                    ),
+                    array(
+                        'col' => 4,
+                        'type' => 'text',
+                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_ICON_SELECTOR_JS',
+                        'label' => $this->l('Mobile Icon JS Selector'),
+                    ),
+                    array(
+                        'col' => 4,
+                        'type' => 'text',
+                        'name' => 'SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_NAME_SELECTOR_JS',
+                        'label' => $this->l('Mobile Customer Name JS Selector'),
                     ),
                 ),
                 'submit' => array(
@@ -180,9 +205,11 @@ class SwtDisplayCustomerGroupName extends Module
     protected function getConfigFormValues()
     {
         return array(
-            'SWTDISPLAYCUSTOMERGROUPNAME_LIVE_MODE' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_LIVE_MODE', true),
-            'SWTDISPLAYCUSTOMERGROUPNAME_ACCOUNT_EMAIL' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_ACCOUNT_EMAIL', 'contact@prestashop.com'),
-            'SWTDISPLAYCUSTOMERGROUPNAME_ACCOUNT_PASSWORD' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_ACCOUNT_PASSWORD', null),
+            'SWTDISPLAYCUSTOMERGROUPNAME_ICON_SELECTOR_JS' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_ICON_SELECTOR_JS'),
+            'SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS'),
+            'SWTDISPLAYCUSTOMERGROUPNAME_NAME_SELECTOR_JS' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_NAME_SELECTOR_JS'),
+            'SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_ICON_SELECTOR_JS' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_ICON_SELECTOR_JS'),
+            'SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_NAME_SELECTOR_JS' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_NAME_SELECTOR_JS'),
         );
     }
 
@@ -196,25 +223,70 @@ class SwtDisplayCustomerGroupName extends Module
         foreach (array_keys($form_values) as $key) {
             Configuration::updateValue($key, Tools::getValue($key));
         }
-    }
 
-    /**
-    * Add the CSS & JavaScript files you want to be loaded in the BO.
-    */
-    public function hookDisplayBackOfficeHeader()
-    {
-        if (Tools::getValue('configure') == $this->name) {
-            $this->context->controller->addJS($this->_path.'views/js/back.js');
-            $this->context->controller->addCSS($this->_path.'views/css/back.css');
-        }
+        $this->context->controller->confirmations[] = $this->l('Update successful');
     }
 
     /**
      * Add the CSS & JavaScript files you want to be added on the FO.
      */
-    public function hookHeader()
+    public function hookDisplayHeader()
     {
-        $this->context->controller->addJS($this->_path.'/views/js/front.js');
-        $this->context->controller->addCSS($this->_path.'/views/css/front.css');
+        if (!Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS')) {
+            return;
+        }
+
+        Media::addJsDef([
+            'swtdisplaycustomergroupname_js' => [
+                'group_data' => SwtCustomerGroupDisplay::getCurrentGroupDisplay($this->context),
+                'icon_js_selector' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_ICON_SELECTOR_JS'),
+                'name_js_selector' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_NAME_SELECTOR_JS'),
+                'mobile_icon_js_selector' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_ICON_SELECTOR_JS'),
+                'mobile_name_js_selector' => Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_MOBILE_NAME_SELECTOR_JS'),
+            ],
+        ]);
+
+        $this->context->controller->addJS($this->_path . '/views/js/front.js');
+        $this->context->controller->addCSS($this->_path . '/views/css/front.css');
+    }
+
+    /**
+     * Render customer profile icon.
+     *
+     * @return string
+     */
+    public function hookDisplaySwtCustomerProfileIcon(): string
+    {
+        if (Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS')) {
+            return '';
+        }
+
+        $groupData = SwtCustomerGroupDisplay::getCurrentGroupDisplay($this->context);
+
+        $this->context->smarty->assign([
+            'group_icon_url' => $groupData['icon_url'],
+        ]);
+
+        return $this->fetch('module:' . $this->name . '/views/templates/hook/profile-icon.tpl');
+    }
+
+    /**
+     * Render customer group display name and icon.
+     *
+     * @return string
+     */
+    public function hookDisplaySwtCustomerGroupName(): string
+    {
+        if (Configuration::get('SWTDISPLAYCUSTOMERGROUPNAME_DISPLAY_METHOD_JS')) {
+            return '';
+        }
+
+        $groupData = SwtCustomerGroupDisplay::getCurrentGroupDisplay($this->context);
+
+        $this->context->smarty->assign([
+            'group_name' => $groupData['name'],
+        ]);
+
+        return $this->fetch('module:' . $this->name . '/views/templates/hook/group-name.tpl');
     }
 }

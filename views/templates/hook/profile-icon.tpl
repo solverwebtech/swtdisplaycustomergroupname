@@ -1,5 +1,4 @@
-<?php
-/**
+{*
 * 2007-2026 PrestaShop
 *
 * NOTICE OF LICENSE
@@ -22,33 +21,8 @@
 *  @copyright 2007-2026 PrestaShop SA
 *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
-*/
+*}
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
-/**
- * Remove SQL structure for swtdisplaycustomergroupname module.
- * 
- * In some cases you should not drop the tables.
- * Maybe the merchant will just try to reset the module
- * but does not want to loose all of the data associated to the module.
- *
- * @return bool
- */
-function uninstallSql(): bool
-{
-    $sql = [];
-
-    $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'swt_customer_group_display_lang`;';
-    $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'swt_customer_group_display`;';
-
-    foreach ($sql as $query) {
-        if (!Db::getInstance()->execute($query)) {
-            return false;
-        }
-    }
-
-    return true;
-}
+{if isset($group_icon_url) && $group_icon_url}
+	<img src="{$group_icon_url|escape:'html':'UTF-8'}" alt="{l s='Group Icon' mod='swtdisplaycustomergroupname'}" class="swt-customer-group-icon" width="24" height="24" />
+{/if}

@@ -1,0 +1,13 @@
+{
+  "name": "kaleem/swt-display-customer-group-name",
+  "description": "Display Customer Group Name with custom label and icon support",
+  "type": "prestashop-module",
+  "autoload": {
+    "psr-4": {
+      "Kaleem\\SwtDisplayCustomerGroupName\\": "classes/"
+    }
+  },
+  "config": {
+    "prepend-autoloader": false
+  }
+}
