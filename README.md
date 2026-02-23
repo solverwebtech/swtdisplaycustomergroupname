@@ -126,4 +126,4 @@ These custom hooks provide full flexibility for theme developers and store owner
 
 ---
 
-After installation, the module will be available and ready to hook wherever needed.
+Developed and maintained by **Kaleem Ullah (SolverWebTech)** – Freelance PrestaShop Module Developer.
