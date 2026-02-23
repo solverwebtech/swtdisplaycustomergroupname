@@ -44,7 +44,7 @@ class SwtDisplayCustomerGroupName extends Module
     {
         $this->name = 'swtdisplaycustomergroupname';
         $this->tab = 'front_office_features';
-        $this->version = '1.0.0';
+        $this->version = '1.1.1';
         $this->author = 'Kaleem Ullah | SolverWebTech | Freelance';
         $this->need_instance = 1;
         $this->bootstrap = true;
