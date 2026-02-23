@@ -33,6 +33,7 @@ use DbQuery;
 use Group;
 use Kaleem\SwtDisplayCustomerGroupName\SwtCustomerGroupDisplay;
 use Language;
+use Module;
 use Tab;
 use Tools;
 
@@ -57,6 +58,7 @@ class SwtDisplayCustomerGroupHelper
      */
     public static function installTab(string $moduleName): bool
     {
+        $module = Module::getInstanceByName('swtdisplaycustomergroupname');
         $tab = new Tab();
         $tab->active = 1;
         $tab->class_name = 'AdminSwtCustomerGroupDisplay';
@@ -64,7 +66,7 @@ class SwtDisplayCustomerGroupHelper
         $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentCustomer');
 
         foreach (Language::getLanguages(true) as $lang) {
-            $tab->name[(int) $lang['id_lang']] = 'FO Profile Group Name';
+            $tab->name[(int) $lang['id_lang']] = $module->l('FO Profile Group Name', 'SwtDisplayCustomerGroupHelper');
         }
 
         return $tab->add();

@@ -71,7 +71,7 @@ class AdminSwtCustomerGroupDisplayController extends ModuleAdminController
                 'align' => 'center',
             ],
             'group_name' => [
-                'title' => $this->l('Customer Group'),
+                'title' => $this->module->l('Customer Group', 'AdminSwtCustomerGroupDisplay'),
                 'filter_key' => 'gl!name',
             ],
             'display_name' => [
@@ -309,7 +309,7 @@ class AdminSwtCustomerGroupDisplayController extends ModuleAdminController
         $file = $_FILES['icon'];
 
         if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-            $this->errors[] = $this->l('Invalid uploaded file.');
+            $this->errors[] = $this->module->l('Invalid uploaded file.', 'AdminSwtCustomerGroupDisplay');
             return;
         }
 
@@ -325,7 +325,7 @@ class AdminSwtCustomerGroupDisplayController extends ModuleAdminController
         $imageSize = @getimagesize($file['tmp_name']);
 
         if (!$imageSize) {
-            $this->errors[] = $this->l('Unable to read image dimensions.');
+            $this->errors[] = $this->module->l('Unable to read image dimensions.', 'AdminSwtCustomerGroupDisplay');
             return;
         }
 
@@ -333,7 +333,7 @@ class AdminSwtCustomerGroupDisplayController extends ModuleAdminController
         $height = (int) $imageSize[1];
 
         if ($width > 30 || $height > 30) {
-            $this->errors[] = $this->l('Icon dimensions must be 30x30 pixels or smaller.');
+            $this->errors[] = $this->module->l('Icon dimensions must be 30x30 pixels or smaller.', 'AdminSwtCustomerGroupDisplay');
             return;
         }
 
@@ -343,7 +343,7 @@ class AdminSwtCustomerGroupDisplayController extends ModuleAdminController
         $destination = _PS_MODULE_DIR_ . $this->module->name . '/views/img/' . $fileName;
 
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            $this->errors[] = $this->l('Failed to save uploaded image.');
+            $this->errors[] = $this->module->l('Failed to save uploaded image.', 'AdminSwtCustomerGroupDisplay');
             return;
         }
 
