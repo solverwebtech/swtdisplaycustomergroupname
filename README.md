@@ -10,7 +10,7 @@
 
 ## 📌 Overview
 
-Display Customer Group Name is a lightweight PrestaShop module that shows the logged-in customer's group name along with a profile icon.
+Display Customer Group Name is a lightweight PrestaShop module that shows the customer's group name along with a profile icon.
 
 It can be displayed in the header, customer account area, or anywhere using a custom hook.
 
